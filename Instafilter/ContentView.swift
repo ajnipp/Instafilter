@@ -6,49 +6,64 @@
 //
 
 import SwiftUI
-import CoreImage
-import CoreImage.CIFilterBuiltins
 
 struct ContentView: View {
     @State private var image: Image?
+    @State private var filterIntensity = 0.5
+    
+    @State private var showingImagePicker = false
+    @State private var inputImage: UIImage?
     
     var body: some View {
-        VStack {
-            image?
-                .resizable()
-                .scaledToFit()
+        NavigationView {
+            VStack {
+                ZStack {
+                    Rectangle()
+                        .fill(.secondary)
+
+                    Text("Tap to select a picture")
+                        .foregroundColor(.white)
+                        .font(.headline)
+
+                    image?
+                        .resizable()
+                        .scaledToFit()
+                }
+                .onTapGesture {
+                    showingImagePicker = true
+                }
+
+                HStack {
+                    Text("Intensity")
+                    Slider(value: $filterIntensity)
+                }
+                .padding(.vertical)
+
+                HStack {
+                    Button("Change Filter") {
+                        // change filter
+                    }
+
+                    Spacer()
+
+                    Button("Save") {
+                        // save the picture
+                    }
+                }
+            }
+            .padding([.horizontal, .bottom])
+            .navigationTitle("Instafilter")
+            .onChange(of: inputImage) { _ in loadImage() }
+            .sheet(isPresented: $showingImagePicker) {
+                ImagePicker(image: $inputImage)
+            }
         }
-        .onAppear(perform: loadImage)
     }
     func loadImage() {
-        guard let inputImage = UIImage(named: "Example") else { return }
-        let beginImage = CIImage(image: inputImage)
-        
-        let context = CIContext()
-        let currentFilter = CIFilter.twirlDistortion()
-        currentFilter.inputImage = beginImage
-        
-        let amount = 1.0
-        let inputKeys = currentFilter.inputKeys
-        
-        if inputKeys.contains(kCIInputIntensityKey) {
-            currentFilter.setValue(amount, forKey: kCIInputIntensityKey)
-        }
-        
-        if inputKeys.contains(kCIInputRadiusKey) {
-            currentFilter.setValue(amount * 200, forKey: kCIInputRadiusKey)
-        }
-        
-        if inputKeys.contains(kCIInputScaleKey) {
-            currentFilter.setValue(amount * 10, forKey: kCIInputScaleKey)
-        }
-        
-        guard let outputImage = currentFilter.outputImage else { return }
-        
-        if let cgimg = context.createCGImage(outputImage, from: outputImage.extent) {
-            let uiImage = UIImage(cgImage: cgimg)
-            image = Image(uiImage: uiImage)
-        }
+        guard let inputImage = inputImage else { return }
+        image = Image(uiImage: inputImage)
+    }
+    func save() {
         
     }
 }
